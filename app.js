@@ -13,8 +13,24 @@ const LEVELS = [
   { value: 2, label: '😣 かなり' },
   { value: 3, label: '😱 すごく' },
 ];
-// 特別なお祝いを出す連続日数
-const MILESTONES = [3, 7, 14, 30, 50, 100, 200, 365];
+// 話した・書いた言葉から分野を自動で選ぶためのキーワード
+const CATEGORY_KEYWORDS = {
+  '住まい': ['家', '部屋', 'アパート', 'マンション', '家賃', '大家', '引っ越', '水漏れ', '雨漏り', 'トイレ', '風呂', 'お風呂', '台所', 'キッチン', '掃除', '洗濯', 'ゴミ', 'ごみ', '近所', '騒音', '虫', 'カビ', '鍵', 'ドア', '窓', '庭'],
+  '家電・機器': ['家電', 'エアコン', '冷蔵庫', '洗濯機', '電子レンジ', 'レンジ', 'テレビ', '掃除機', '炊飯器', 'ドライヤー', '電球', 'リモコン', '電池', '充電器', 'プリンター', 'プリンタ', '故障', '壊れ', '動かない', 'つかない', '電源'],
+  'お金・手続き': ['お金', '金', '支払い', '払', '料金', '請求', '税金', '年金', '保険', '銀行', '口座', '振込', '振り込み', 'ローン', '給料', '給与', '節約', '高い', '値上', '役所', '手続き', '申請', '書類', '届け出', 'マイナンバー', '免許', '契約', '解約'],
+  '健康': ['体調', '病院', '医者', '歯医者', '薬', '痛い', '痛む', '痛くて', '頭痛', '腰', '肩', '熱', '風邪', 'かぜ', '咳', 'せき', '花粉', 'アレルギー', '眠れ', '寝不足', '睡眠', '疲れ', 'だるい', '健康', '体重', 'ダイエット', '目が', '病気', 'けが', '怪我'],
+  '人間関係': ['友達', '友人', '家族', '親', '母', '父', '夫', '妻', '旦那', '子ども', '子供', '息子', '娘', '彼氏', '彼女', '恋人', '上司', '同僚', '先輩', '後輩', '近所の人', '人間関係', 'けんか', '喧嘩', '言われ', '無視', '気まず', '連絡', '返事', 'LINE', 'ライン'],
+  '仕事・学校': ['仕事', '会社', '職場', '出勤', '残業', '会議', '取引先', 'お客', 'バイト', 'アルバイト', '転職', '就職', '面接', '学校', '授業', '宿題', '課題', 'テスト', '試験', '勉強', '先生', '部活', '締め切り', '締切', 'シフト'],
+  'デジタル': ['スマホ', '携帯', 'iPhone', 'アイフォン', 'Android', 'アンドロイド', 'パソコン', 'PC', 'アプリ', 'ネット', 'インターネット', 'Wi-Fi', 'WiFi', 'ワイファイ', 'パスワード', 'ログイン', 'アカウント', 'メール', '通知', '更新', 'アップデート', 'ダウンロード', 'インストール', 'サイト', 'ホームページ', '画面', '設定', 'データ', '写真', '容量', 'ウイルス', '詐欺'],
+  '買い物': ['買い物', '買', 'お店', '店', 'スーパー', 'コンビニ', '通販', 'ネットショッピング', 'Amazon', 'アマゾン', '楽天', '注文', '配達', '宅配', '届かない', '返品', '品切れ', '売り切れ', 'レジ', 'ポイント', 'セール'],
+  '移動': ['電車', 'バス', 'タクシー', '車', '運転', '駐車', '渋滞', '道', '道路', '自転車', '駅', '乗り換え', '遅延', '遅れ', '飛行機', '新幹線', '道に迷', '迷子', '通勤', '通学', '徒歩', '歩い', 'ガソリン'],
+};
+// 話した・書いた言葉から困り度を自動で選ぶためのキーワード（強い言葉を優先する）
+const LEVEL_KEYWORDS = [
+  { value: 3, words: ['最悪', '最低', 'どうしよう', '限界', '無理', '絶望', '泣きそう', '泣いた', 'めちゃくちゃ', 'めっちゃ', 'すごく困', 'ほんとに困', '本当に困', '大変', 'ひどい'] },
+  { value: 2, words: ['かなり', 'けっこう', '結構', '不便', 'イライラ', 'いらいら', '面倒', 'めんどう', 'めんどくさ', 'しんどい', 'つらい', '辛い', '嫌'] },
+  { value: 1, words: ['ちょっと', '少し', 'すこし', '少々', '地味に', 'なんとなく', 'まあまあ', '軽く', 'たまに'] },
+];
 const PRAISES = [
   '今日も記録できました！',
   '話してくれてありがとう！',
@@ -46,7 +62,6 @@ const textInput = $('text-input');
 const submitButton = $('submit-button');
 const noneButton = $('none-button');
 const syncStatus = $('sync-status');
-const streakBadge = $('streak-badge');
 const todayStatus = $('today-status');
 const celebration = $('celebration');
 const intro = $('intro');
@@ -96,19 +111,6 @@ function postedDays(posts) {
   return new Set(posts.map((p) => toDateKey(new Date(p.createdAt))));
 }
 
-// 連続日数：今日まだ記録していなければ昨日から数える（今日中は途切れない）
-function calcStreak(posts) {
-  const days = postedDays(posts);
-  const d = new Date();
-  if (!days.has(toDateKey(d))) d.setDate(d.getDate() - 1);
-  let count = 0;
-  while (days.has(toDateKey(d))) {
-    count++;
-    d.setDate(d.getDate() - 1);
-  }
-  return count;
-}
-
 function makeId() {
   if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -117,6 +119,42 @@ function makeId() {
 // ===== 分野・困り度の選択 =====
 let selectedCategory = '';
 let selectedLevel = 0;
+// 利用者が自分で選んだら、その項目は自動で変えない
+let categoryChosenByUser = false;
+let levelChosenByUser = false;
+
+// 文章に含まれるキーワードから分野を推測する（長い言葉ほど具体的なので重く数える）
+function guessCategory(text) {
+  let best = '';
+  let bestScore = 0;
+  CATEGORIES.forEach((name) => {
+    const score = (CATEGORY_KEYWORDS[name] || [])
+      .filter((word) => text.includes(word))
+      .reduce((sum, word) => sum + word.length, 0);
+    if (score > bestScore) {
+      best = name;
+      bestScore = score;
+    }
+  });
+  return best;
+}
+
+// 文章に含まれる言葉から困り度を推測する（強いほうを優先）
+function guessLevel(text) {
+  const hit = LEVEL_KEYWORDS.find(({ words }) => words.some((word) => text.includes(word)));
+  return hit ? hit.value : 0;
+}
+
+// 入力が変わるたびに、自分で選んでいない項目だけ自動で選び直す
+function autoSelectOptions() {
+  const text = textInput.value;
+  const category = categoryChosenByUser ? selectedCategory : guessCategory(text);
+  const level = levelChosenByUser ? selectedLevel : guessLevel(text);
+  if (category === selectedCategory && level === selectedLevel) return;
+  selectedCategory = category;
+  selectedLevel = level;
+  renderChips();
+}
 
 function renderChips() {
   const categoryBox = $('category-chips');
@@ -128,6 +166,7 @@ function renderChips() {
     categoryBox.append(makeChip(name, selectedCategory === name, () => {
       // もう一度押すと選択を外せる
       selectedCategory = selectedCategory === name ? '' : name;
+      categoryChosenByUser = true;
       renderChips();
     }));
   });
@@ -135,9 +174,17 @@ function renderChips() {
   LEVELS.forEach(({ value, label }) => {
     levelBox.append(makeChip(label, selectedLevel === value, () => {
       selectedLevel = selectedLevel === value ? 0 : value;
+      levelChosenByUser = true;
       renderChips();
     }));
   });
+
+  // 閉じたままでも、何が選ばれているかわかるようにする
+  const levelLabel = (LEVELS.find((l) => l.value === selectedLevel) || {}).label;
+  const picked = [selectedCategory, levelLabel].filter(Boolean);
+  $('options-summary').textContent = picked.length
+    ? `${picked.join(' ／ ')}（タップで変更）`
+    : '分野と困り度をえらぶ（なくてもOK）';
 }
 
 function makeChip(label, pressed, onClick) {
@@ -191,6 +238,7 @@ function setupSpeech() {
     usedVoice = true;
     resetSilenceTimer();
     updateSubmitState();
+    autoSelectOptions();
   };
 
   recognition.onerror = (event) => {
@@ -278,6 +326,8 @@ function resetForm() {
   caretPos = null;
   selectedCategory = '';
   selectedLevel = 0;
+  categoryChosenByUser = false;
+  levelChosenByUser = false;
   usedVoice = false;
   usedKeyboard = false;
   $('category-chips').closest('details').open = false;
@@ -307,27 +357,25 @@ function addPost(isNone) {
 
   resetForm();
   renderAll();
-  showCelebration(calcStreak(posts), postedBefore, isNone);
+  showCelebration(postedBefore, isNone);
   syncPending();
 }
 
 // ===== 送信後のお祝い =====
 let celebrationTimer = null;
 
-function showCelebration(streak, postedBefore, isNone) {
-  const isMilestone = !postedBefore && MILESTONES.includes(streak);
-  $('celebration-emoji').textContent = isMilestone ? '🎉' : isNone ? '🌤️' : '🔥';
-  $('celebration-streak').textContent = `${streak}日連続！`;
+function showCelebration(postedBefore, isNone) {
+  $('celebration-emoji').textContent = isNone ? '🌤️' : '👍';
+  $('celebration-title').textContent = '記録しました';
 
   let message = PRAISES[Math.floor(Math.random() * PRAISES.length)];
-  if (isMilestone) message = `${streak}日連続達成！すごい！これからもよろしくお願いします。`;
-  else if (isNone) message = '困りごとなしの日も記録できました。いい一日でしたね。';
+  if (isNone) message = '困りごとなしの日も記録できました。いい一日でしたね。';
   else if (postedBefore) message = '追加ありがとう！何件でも送れます。';
   $('celebration-message').textContent = message;
 
   celebration.hidden = false;
   clearTimeout(celebrationTimer);
-  celebrationTimer = setTimeout(hideCelebration, isMilestone ? 4000 : 2200);
+  celebrationTimer = setTimeout(hideCelebration, 2200);
 }
 
 function hideCelebration() {
@@ -396,14 +444,10 @@ function renderSyncStatus() {
 
 // ===== 投稿画面の表示 =====
 function renderPostView(posts) {
-  const streak = calcStreak(posts);
-  streakBadge.textContent = `🔥 ${streak}日`;
   const today = toDateKey(new Date());
   const todayCount = posts.filter((p) => toDateKey(new Date(p.createdAt)) === today).length;
   if (todayCount > 0) {
     todayStatus.textContent = `今日は記録済み ✓（${todayCount}件）何件でも送れます`;
-  } else if (streak > 0) {
-    todayStatus.textContent = `今日記録すると ${streak + 1}日連続！`;
   } else {
     todayStatus.textContent = 'ひとこと話すだけでOK';
   }
@@ -685,6 +729,7 @@ function setupEvents() {
     if (!wantListening) usedKeyboard = true;
     caretPos = textInput.selectionStart;
     updateSubmitState();
+    autoSelectOptions();
   });
   ['click', 'keyup', 'select', 'blur'].forEach((type) => {
     textInput.addEventListener(type, () => {

@@ -14,11 +14,10 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- ヘッダー：アプリ名と連続日数 -->
+  <!-- ヘッダー：アプリ名と使い方ボタン -->
   <header class="app-header">
     <h1 class="app-title">VoiceFix</h1>
     <div class="header-right">
-      <span class="streak-badge" id="streak-badge" aria-live="polite">🔥 0日</span>
       <button class="icon-button" id="open-intro" type="button" aria-label="使い方と通知の設定">？</button>
     </div>
   </header>
@@ -40,7 +39,7 @@
       <textarea class="text-input" id="text-input" rows="4" placeholder="話した内容がここに出ます。キーボードで書いたり直したりもできます。"></textarea>
 
       <details class="options">
-        <summary>分野と困り度をえらぶ（なくてもOK）</summary>
+        <summary id="options-summary">分野と困り度をえらぶ（なくてもOK）</summary>
         <div class="chip-group" id="category-chips" role="group" aria-label="分野"></div>
         <div class="chip-group" id="level-chips" role="group" aria-label="困り度"></div>
       </details>
@@ -86,8 +85,8 @@
   <!-- 送信後のお祝い表示 -->
   <div class="celebration" id="celebration" hidden>
     <div class="celebration-card">
-      <p class="celebration-emoji" id="celebration-emoji">🔥</p>
-      <p class="celebration-streak" id="celebration-streak"></p>
+      <p class="celebration-emoji" id="celebration-emoji">👍</p>
+      <p class="celebration-title" id="celebration-title"></p>
       <p class="celebration-message" id="celebration-message"></p>
     </div>
   </div>

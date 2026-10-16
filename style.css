@@ -110,13 +110,6 @@ button {
   gap: 8px;
 }
 
-.streak-badge {
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: var(--color-accent-soft);
-  font-weight: 700;
-}
-
 .icon-button {
   width: 44px;
   height: 44px;
@@ -532,7 +525,7 @@ button {
   line-height: 1.2;
 }
 
-.celebration-streak {
+.celebration-title {
   margin: 8px 0 4px;
   font-size: 26px;
   font-weight: 800;
