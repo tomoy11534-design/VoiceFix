@@ -3,7 +3,7 @@
 // ===== 設定 =====
 // Google Apps Script のウェブアプリURL（docs/setup.md の手順で取得して貼り付ける）
 // 空のままだと、投稿はこの端末の中にだけ保存される
-const ENDPOINT_URL = '';
+const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxCM3N4URUm2F7CsDSbMHFf6Nm6zh0jf3L8ibjaB6SkQ0i_jlCsA4V0wx_rG-rmQ3H_/exec';
 // Apps Script 側（gas/code.gs）と同じ合言葉にする
 const SHARED_TOKEN = 'vmy-voice-key-99';
 
