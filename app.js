@@ -5,7 +5,7 @@
 // 空のままだと、投稿はこの端末の中にだけ保存される
 const ENDPOINT_URL = '';
 // Apps Script 側（gas/code.gs）と同じ合言葉にする
-const SHARED_TOKEN = 'change-me';
+const SHARED_TOKEN = 'vmy-voice-key-99';
 
 const CATEGORIES = ['住まい', '家電・機器', 'お金・手続き', '健康', '人間関係', '仕事・学校', 'デジタル', '買い物', '移動', 'その他'];
 const LEVELS = [
