@@ -1,0 +1,19 @@
+{
+  "name": "VoiceFix 今日の困りごと",
+  "short_name": "VoiceFix",
+  "description": "今日の困りごとを、ひとこと話すだけで記録するアプリ",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff8f3",
+  "theme_color": "#f26b3a",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

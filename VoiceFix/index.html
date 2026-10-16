@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>VoiceFix</title>
+  <meta name="description" content="今日の困りごとを、ひとこと話すだけで記録するアプリ">
+  <meta name="theme-color" content="#f26b3a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="VoiceFix">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ヘッダー：アプリ名と連続日数 -->
+  <header class="app-header">
+    <h1 class="app-title">VoiceFix</h1>
+    <div class="header-right">
+      <span class="streak-badge" id="streak-badge" aria-live="polite">🔥 0日</span>
+      <button class="icon-button" id="open-intro" type="button" aria-label="使い方と通知の設定">？</button>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <!-- 投稿画面 -->
+    <section class="view" id="view-post" data-view="post">
+      <p class="today-status" id="today-status"></p>
+      <h2 class="question">今日はどんなことに<br>困りましたか？</h2>
+
+      <div class="mic-area">
+        <button class="mic-button" id="mic-button" type="button" aria-pressed="false">
+          <span class="mic-icon" aria-hidden="true">🎤</span>
+        </button>
+        <p class="mic-hint" id="mic-hint">タップして話す</p>
+      </div>
+
+      <label class="visually-hidden" for="text-input">困りごと</label>
+      <textarea class="text-input" id="text-input" rows="4" placeholder="話した内容がここに出ます。キーボードで書いたり直したりもできます。"></textarea>
+
+      <details class="options">
+        <summary>分野と困り度をえらぶ（なくてもOK）</summary>
+        <div class="chip-group" id="category-chips" role="group" aria-label="分野"></div>
+        <div class="chip-group" id="level-chips" role="group" aria-label="困り度"></div>
+      </details>
+
+      <button class="submit-button" id="submit-button" type="button" disabled>送信する</button>
+      <button class="none-button" id="none-button" type="button">今日は困りごとなし</button>
+      <p class="sync-status" id="sync-status" aria-live="polite"></p>
+    </section>
+
+    <!-- 記録画面（カレンダーと履歴） -->
+    <section class="view" id="view-record" data-view="record" hidden>
+      <div class="calendar-header">
+        <button class="icon-button" id="prev-month" type="button" aria-label="前の月">‹</button>
+        <h2 class="calendar-title" id="calendar-title"></h2>
+        <button class="icon-button" id="next-month" type="button" aria-label="次の月">›</button>
+      </div>
+      <div class="calendar" id="calendar"></div>
+      <p class="month-summary" id="month-summary"></p>
+      <div class="history" id="history"></div>
+    </section>
+
+    <!-- ランキング画面 -->
+    <section class="view" id="view-ranking" data-view="ranking" hidden>
+      <div class="period-tabs" role="group" aria-label="期間">
+        <button class="period-tab" type="button" data-period="week" aria-pressed="true">今週</button>
+        <button class="period-tab" type="button" data-period="month" aria-pressed="false">今月</button>
+        <button class="period-tab" type="button" data-period="all" aria-pressed="false">全期間</button>
+      </div>
+      <h2 class="section-title">分野別ランキング</h2>
+      <div class="ranking-list" id="category-ranking"></div>
+      <h2 class="section-title">よく出る言葉</h2>
+      <ol class="word-ranking" id="word-ranking"></ol>
+    </section>
+  </main>
+
+  <!-- 下部タブ -->
+  <nav class="tab-bar" aria-label="画面切り替え">
+    <button class="tab" type="button" data-target="post" aria-current="page"><span aria-hidden="true">🎤</span>話す</button>
+    <button class="tab" type="button" data-target="record"><span aria-hidden="true">📅</span>記録</button>
+    <button class="tab" type="button" data-target="ranking"><span aria-hidden="true">🏆</span>ランキング</button>
+  </nav>
+
+  <!-- 送信後のお祝い表示 -->
+  <div class="celebration" id="celebration" hidden>
+    <div class="celebration-card">
+      <p class="celebration-emoji" id="celebration-emoji">🔥</p>
+      <p class="celebration-streak" id="celebration-streak"></p>
+      <p class="celebration-message" id="celebration-message"></p>
+    </div>
+  </div>
+
+  <!-- はじめに（初回と「？」ボタンで表示） -->
+  <dialog class="intro" id="intro">
+    <h2>ようこそ VoiceFix へ</h2>
+    <p>毎日の「困ったな」を、ひとこと話して記録するアプリです。</p>
+    <ol class="intro-steps">
+      <li>🎤 を押して困りごとを話す（文字で書いてもOK）</li>
+      <li>「送信する」を押す</li>
+      <li>困りごとがない日は「今日は困りごとなし」を押す</li>
+    </ol>
+    <p class="intro-note">※ 送信した内容は、このアプリを送った人に届きます。名前や住所などは話さないでください。</p>
+
+    <h3>毎日の通知を受け取る</h3>
+    <p>好きな時間を選んで、スマホのカレンダーに登録してください。毎日その時間にお知らせが来ます。</p>
+    <div class="reminder-row">
+      <label for="reminder-time">通知の時間</label>
+      <input type="time" id="reminder-time" value="20:00">
+      <button class="secondary-button" id="reminder-button" type="button">カレンダーに登録</button>
+    </div>
+
+    <h3>ホーム画面に置く</h3>
+    <ul class="install-help">
+      <li><strong>iPhone</strong>：Safari の共有ボタン（□↑）→「ホーム画面に追加」</li>
+      <li><strong>Android</strong>：Chrome のメニュー（︙）→「ホーム画面に追加」</li>
+    </ul>
+    <button class="secondary-button" id="install-button" type="button" hidden>ホーム画面に追加する</button>
+
+    <button class="submit-button" id="intro-close" type="button">はじめる</button>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
