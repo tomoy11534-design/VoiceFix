@@ -127,6 +127,28 @@ button {
   padding: 8px 16px calc(var(--tab-height) + 24px + env(safe-area-inset-bottom));
 }
 
+/* ===== 送る内容の切り替え ===== */
+.kind-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.kind-tab {
+  flex: 1;
+  min-height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.kind-tab[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: 700;
+}
+
 .today-status {
   margin: 0;
   text-align: center;

@@ -31,6 +31,19 @@ const LEVEL_KEYWORDS = [
   { value: 2, words: ['かなり', 'けっこう', '結構', '不便', 'イライラ', 'いらいら', '面倒', 'めんどう', 'めんどくさ', 'しんどい', 'つらい', '辛い', '嫌'] },
   { value: 1, words: ['ちょっと', '少し', 'すこし', '少々', '地味に', 'なんとなく', 'まあまあ', '軽く', 'たまに'] },
 ];
+// 送る内容の種類ごとの表示
+const KINDS = {
+  trouble: {
+    question: '今日はどんなことに<br>困りましたか？',
+    label: '困りごと',
+    placeholder: '話した内容がここに出ます。キーボードで書いたり直したりもできます。',
+  },
+  request: {
+    question: 'このアプリを<br>どう良くしてほしいですか？',
+    label: 'アプリへの要望',
+    placeholder: '「ここが使いにくい」「こんな機能がほしい」など、話したり書いたりしてください。',
+  },
+};
 const PRAISES = [
   '今日も記録できました！',
   '話してくれてありがとう！',
@@ -107,13 +120,35 @@ function toDateKey(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+// アプリへの要望かどうか（以前の投稿には kind がないので困りごととして扱う）
+const isRequest = (post) => post.kind === 'request';
+
+// カレンダーのスタンプは困りごとの記録がある日だけ押す
 function postedDays(posts) {
-  return new Set(posts.map((p) => toDateKey(new Date(p.createdAt))));
+  return new Set(posts.filter((p) => !isRequest(p)).map((p) => toDateKey(new Date(p.createdAt))));
 }
 
 function makeId() {
   if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+// ===== 送る内容の切り替え =====
+let postKind = 'trouble';
+
+function setKind(kind) {
+  postKind = kind;
+  const config = KINDS[kind];
+  document.querySelectorAll('.kind-tab').forEach((tab) => {
+    tab.setAttribute('aria-pressed', String(tab.dataset.kind === kind));
+  });
+  $('question').innerHTML = config.question;
+  $('text-label').textContent = config.label;
+  textInput.placeholder = config.placeholder;
+  // 要望では分野・困り度と「困りごとなし」は使わない
+  $('category-chips').closest('details').hidden = kind === 'request';
+  noneButton.hidden = kind === 'request';
+  renderPostView(loadPosts());
 }
 
 // ===== 分野・困り度の選択 =====
@@ -332,6 +367,7 @@ function resetForm() {
   usedKeyboard = false;
   $('category-chips').closest('details').open = false;
   micHint.textContent = 'タップして話す';
+  setKind('trouble');
   renderChips();
   updateSubmitState();
 }
@@ -342,12 +378,14 @@ function addPost(isNone) {
   if (!isNone && !text) return;
 
   const posts = loadPosts();
+  const kind = isNone ? 'trouble' : postKind;
   const post = {
     id: makeId(),
     createdAt: new Date().toISOString(),
+    kind,
     text: isNone ? '' : text,
-    category: isNone ? '' : selectedCategory,
-    level: isNone ? 0 : selectedLevel,
+    category: isNone || kind === 'request' ? '' : selectedCategory,
+    level: isNone || kind === 'request' ? 0 : selectedLevel,
     inputMethod: isNone ? 'none' : inputMethodOf(),
     synced: false,
   };
@@ -357,19 +395,20 @@ function addPost(isNone) {
 
   resetForm();
   renderAll();
-  showCelebration(postedBefore, isNone);
+  showCelebration(postedBefore, isNone, kind === 'request');
   syncPending();
 }
 
 // ===== 送信後のお祝い =====
 let celebrationTimer = null;
 
-function showCelebration(postedBefore, isNone) {
-  $('celebration-emoji').textContent = isNone ? '🌤️' : '👍';
-  $('celebration-title').textContent = '記録しました';
+function showCelebration(postedBefore, isNone, isRequestPost) {
+  $('celebration-emoji').textContent = isRequestPost ? '💡' : isNone ? '🌤️' : '👍';
+  $('celebration-title').textContent = isRequestPost ? '要望を送りました' : '記録しました';
 
   let message = PRAISES[Math.floor(Math.random() * PRAISES.length)];
-  if (isNone) message = '困りごとなしの日も記録できました。いい一日でしたね。';
+  if (isRequestPost) message = 'ご意見ありがとうございます！アプリの改善に使わせていただきます。';
+  else if (isNone) message = '困りごとなしの日も記録できました。いい一日でしたね。';
   else if (postedBefore) message = '追加ありがとう！何件でも送れます。';
   $('celebration-message').textContent = message;
 
@@ -413,6 +452,7 @@ async function syncPending() {
             token: SHARED_TOKEN,
             id: post.id,
             createdAt: post.createdAt,
+            kind: post.kind || 'trouble',
             text: post.text,
             category: post.category,
             level: post.level,
@@ -444,8 +484,12 @@ function renderSyncStatus() {
 
 // ===== 投稿画面の表示 =====
 function renderPostView(posts) {
+  if (postKind === 'request') {
+    todayStatus.textContent = '思いついたことを気軽にどうぞ';
+    return;
+  }
   const today = toDateKey(new Date());
-  const todayCount = posts.filter((p) => toDateKey(new Date(p.createdAt)) === today).length;
+  const todayCount = posts.filter((p) => !isRequest(p) && toDateKey(new Date(p.createdAt)) === today).length;
   if (todayCount > 0) {
     todayStatus.textContent = `今日は記録済み ✓（${todayCount}件）何件でも送れます`;
   } else {
@@ -533,6 +577,7 @@ function makeHistoryItem(post, date) {
   const time = document.createElement('span');
   time.textContent = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
   meta.append(time);
+  if (isRequest(post)) meta.append(makeTag('💡 アプリへの要望'));
   if (post.category) meta.append(makeTag(post.category));
   const level = LEVELS.find((l) => l.value === post.level);
   if (level) meta.append(makeTag(level.label));
@@ -570,7 +615,8 @@ function filterByPeriod(posts, period) {
   } else if (period === 'month') {
     from = new Date(now.getFullYear(), now.getMonth(), 1);
   }
-  return posts.filter((p) => p.inputMethod !== 'none' && (!from || new Date(p.createdAt) >= from));
+  // ランキングは困りごとだけを数える
+  return posts.filter((p) => p.inputMethod !== 'none' && !isRequest(p) && (!from || new Date(p.createdAt) >= from));
 }
 
 function extractWords(text) {
@@ -739,6 +785,10 @@ function setupEvents() {
   // 録音中に入力欄を触ったら、手入力を優先して録音を止める
   textInput.addEventListener('focus', () => {
     if (wantListening) stopListening();
+  });
+
+  document.querySelectorAll('.kind-tab').forEach((tab) => {
+    tab.addEventListener('click', () => setKind(tab.dataset.kind));
   });
 
   submitButton.addEventListener('click', () => addPost(false));

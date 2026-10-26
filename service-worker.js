@@ -1,5 +1,5 @@
 // オフラインでも開けるように画面のファイルを保存しておく
-const CACHE_NAME = 'voicefix-v1';
+const CACHE_NAME = 'voicefix-v2';
 const APP_FILES = ['./', 'index.html', 'style.css', 'app.js', 'manifest.json', 'icon.svg'];
 
 self.addEventListener('install', (event) => {

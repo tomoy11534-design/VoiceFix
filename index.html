@@ -25,8 +25,13 @@
   <main class="app-main">
     <!-- 投稿画面 -->
     <section class="view" id="view-post" data-view="post">
+      <!-- 送る内容の切り替え：困りごと／アプリへの要望 -->
+      <div class="kind-tabs" role="group" aria-label="送る内容">
+        <button class="kind-tab" type="button" data-kind="trouble" aria-pressed="true">困りごと</button>
+        <button class="kind-tab" type="button" data-kind="request" aria-pressed="false">💡 アプリへの要望</button>
+      </div>
       <p class="today-status" id="today-status"></p>
-      <h2 class="question">今日はどんなことに<br>困りましたか？</h2>
+      <h2 class="question" id="question">今日はどんなことに<br>困りましたか？</h2>
 
       <div class="mic-area">
         <button class="mic-button" id="mic-button" type="button" aria-pressed="false">
@@ -35,7 +40,7 @@
         <p class="mic-hint" id="mic-hint">タップして話す</p>
       </div>
 
-      <label class="visually-hidden" for="text-input">困りごと</label>
+      <label class="visually-hidden" for="text-input" id="text-label">困りごと</label>
       <textarea class="text-input" id="text-input" rows="4" placeholder="話した内容がここに出ます。キーボードで書いたり直したりもできます。"></textarea>
 
       <details class="options">
@@ -99,6 +104,7 @@
       <li>🎤 を押して困りごとを話す（文字で書いてもOK）</li>
       <li>「送信する」を押す</li>
       <li>困りごとがない日は「今日は困りごとなし」を押す</li>
+      <li>このアプリへの要望は、上の「💡 アプリへの要望」に切り替えて送る</li>
     </ol>
     <p class="intro-note">※ 送信した内容は、このアプリを送った人に届きます。名前や住所などは話さないでください。</p>
 
