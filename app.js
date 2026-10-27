@@ -7,7 +7,7 @@ const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxCM3N4URUm2F7CsDS
 // Apps Script 側（gas/code.gs）と同じ合言葉にする
 const SHARED_TOKEN = 'vmy-voice-key-99';
 // 時間を合わせずにやりとりできる「アプリ要望ボード」のURL
-const BOARD_URL = 'https://claude.ai/artifact/5EjN3UkkNe8UB8bsuewfcH';
+const BOARD_URL = 'https://tomoy11534-design.github.io/app-request-board/?app=VoiceFix';
 
 const CATEGORIES = ['住まい', '家電・機器', 'お金・手続き', '健康', '人間関係', '仕事・学校', 'デジタル', '買い物', '移動', 'その他'];
 const LEVELS = [
