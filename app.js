@@ -6,6 +6,8 @@
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxCM3N4URUm2F7CsDSbMHFf6Nm6zh0jf3L8ibjaB6SkQ0i_jlCsA4V0wx_rG-rmQ3H_/exec';
 // Apps Script 側（gas/code.gs）と同じ合言葉にする
 const SHARED_TOKEN = 'vmy-voice-key-99';
+// 時間を合わせずにやりとりできる「アプリ要望ボード」のURL
+const BOARD_URL = 'https://claude.ai/artifact/5EjN3UkkNe8UB8bsuewfcH';
 
 const CATEGORIES = ['住まい', '家電・機器', 'お金・手続き', '健康', '人間関係', '仕事・学校', 'デジタル', '買い物', '移動', 'その他'];
 const LEVELS = [
@@ -437,9 +439,13 @@ function showCelebration(postedBefore, isNone, kind, urgent) {
   else if (postedBefore) message = '追加ありがとう！何件でも送れます。';
   $('celebration-message').textContent = message;
 
+  // 急ぎ・要望のときは要望ボードへの入口を出し、押せるよう自動では閉じない
+  const showBoard = Boolean(BOARD_URL) && (urgent || kind === 'request');
+  $('celebration-link').hidden = !showBoard;
+
   celebration.hidden = false;
   clearTimeout(celebrationTimer);
-  celebrationTimer = setTimeout(hideCelebration, 2200);
+  if (!showBoard) celebrationTimer = setTimeout(hideCelebration, 2200);
 }
 
 function hideCelebration() {
@@ -827,7 +833,17 @@ function setupEvents() {
 
   submitButton.addEventListener('click', () => addPost(false));
   noneButton.addEventListener('click', () => addPost(true));
-  celebration.addEventListener('click', hideCelebration);
+  // 要望ボードの入口を出しているときは、カードの外か「閉じる」で閉じる
+  celebration.addEventListener('click', (event) => {
+    if ($('celebration-link').hidden || event.target === celebration) hideCelebration();
+  });
+  $('celebration-close').addEventListener('click', hideCelebration);
+  // 要望ボードを開いたらお祝い表示は閉じておく
+  document.querySelectorAll('.board-link').forEach((link) => {
+    if (BOARD_URL) link.href = BOARD_URL;
+    else link.hidden = true;
+    link.addEventListener('click', hideCelebration);
+  });
 
   document.querySelectorAll('.tab').forEach((tab) => {
     tab.addEventListener('click', () => showView(tab.dataset.target));
