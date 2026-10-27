@@ -31,17 +31,14 @@ const LEVEL_KEYWORDS = [
   { value: 2, words: ['かなり', 'けっこう', '結構', '不便', 'イライラ', 'いらいら', '面倒', 'めんどう', 'めんどくさ', 'しんどい', 'つらい', '辛い', '嫌'] },
   { value: 1, words: ['ちょっと', '少し', 'すこし', '少々', '地味に', 'なんとなく', 'まあまあ', '軽く', 'たまに'] },
 ];
+// 話した・書いた言葉から「急ぎ」を自動で付けるためのキーワード
+const URGENT_KEYWORDS = ['急ぎ', '急いで', '至急', '早く', 'はやく', '早急', 'すぐ', '今すぐ', 'いますぐ', '早めに', 'なんとかして', '何とかして', '待てない', '間に合わない'];
 // 送る内容の種類ごとの表示
 const KINDS = {
   trouble: {
     question: '今日はどんなことに<br>困りましたか？',
     label: '困りごと',
     placeholder: '話した内容がここに出ます。キーボードで書いたり直したりもできます。',
-  },
-  urgent: {
-    question: '早く作ってほしいもの・<br>早く解決したいことは？',
-    label: '早く解決したいこと',
-    placeholder: '「これを早く作ってほしい」「これだけはすぐ何とかしたい」など、話したり書いたりしてください。',
   },
   request: {
     question: 'このアプリを<br>どう良くしてほしいですか？',
@@ -150,7 +147,8 @@ function setKind(kind) {
   $('question').innerHTML = config.question;
   $('text-label').textContent = config.label;
   textInput.placeholder = config.placeholder;
-  // 困りごと以外では分野・困り度と「困りごとなし」は使わない
+  // 困りごと以外では急ぎ・分野・困り度と「困りごとなし」は使わない
+  $('urgent-area').hidden = kind !== 'trouble';
   $('category-chips').closest('details').hidden = kind !== 'trouble';
   noneButton.hidden = kind !== 'trouble';
   renderPostView(loadPosts());
@@ -162,6 +160,8 @@ let selectedLevel = 0;
 // 利用者が自分で選んだら、その項目は自動で変えない
 let categoryChosenByUser = false;
 let levelChosenByUser = false;
+let isUrgent = false;
+let urgentChosenByUser = false;
 
 // 文章に含まれるキーワードから分野を推測する（長い言葉ほど具体的なので重く数える）
 function guessCategory(text) {
@@ -185,9 +185,24 @@ function guessLevel(text) {
   return hit ? hit.value : 0;
 }
 
+// 急ぎを表す言葉が入っているか
+function guessUrgent(text) {
+  return URGENT_KEYWORDS.some((word) => text.includes(word));
+}
+
+function renderUrgent() {
+  const button = $('urgent-button');
+  button.setAttribute('aria-pressed', String(isUrgent));
+  button.textContent = isUrgent ? '🔥 急ぎ（ON）' : '🔥 急ぎ';
+}
+
 // 入力が変わるたびに、自分で選んでいない項目だけ自動で選び直す
 function autoSelectOptions() {
   const text = textInput.value;
+  if (!urgentChosenByUser && guessUrgent(text) !== isUrgent) {
+    isUrgent = !isUrgent;
+    renderUrgent();
+  }
   const category = categoryChosenByUser ? selectedCategory : guessCategory(text);
   const level = levelChosenByUser ? selectedLevel : guessLevel(text);
   if (category === selectedCategory && level === selectedLevel) return;
@@ -368,6 +383,9 @@ function resetForm() {
   selectedLevel = 0;
   categoryChosenByUser = false;
   levelChosenByUser = false;
+  isUrgent = false;
+  urgentChosenByUser = false;
+  renderUrgent();
   usedVoice = false;
   usedKeyboard = false;
   $('category-chips').closest('details').open = false;
@@ -391,6 +409,7 @@ function addPost(isNone) {
     text: isNone ? '' : text,
     category: kind === 'trouble' && !isNone ? selectedCategory : '',
     level: kind === 'trouble' && !isNone ? selectedLevel : 0,
+    urgent: kind === 'trouble' && !isNone && isUrgent,
     inputMethod: isNone ? 'none' : inputMethodOf(),
     synced: false,
   };
@@ -400,19 +419,19 @@ function addPost(isNone) {
 
   resetForm();
   renderAll();
-  showCelebration(postedBefore, isNone, kind);
+  showCelebration(postedBefore, isNone, kind, post.urgent);
   syncPending();
 }
 
 // ===== 送信後のお祝い =====
 let celebrationTimer = null;
 
-function showCelebration(postedBefore, isNone, kind) {
-  $('celebration-emoji').textContent = kind === 'request' ? '💡' : kind === 'urgent' ? '🔥' : isNone ? '🌤️' : '👍';
-  $('celebration-title').textContent = kind === 'request' ? '要望を送りました' : kind === 'urgent' ? '送りました' : '記録しました';
+function showCelebration(postedBefore, isNone, kind, urgent) {
+  $('celebration-emoji').textContent = kind === 'request' ? '💡' : urgent ? '🔥' : isNone ? '🌤️' : '👍';
+  $('celebration-title').textContent = kind === 'request' ? '要望を送りました' : '記録しました';
 
   let message = PRAISES[Math.floor(Math.random() * PRAISES.length)];
-  if (kind === 'urgent') message = '早く解決できるよう、優先して確認します！';
+  if (urgent) message = '急ぎで届けました。早く解決できるよう優先して確認します！';
   else if (kind === 'request') message = 'ご意見ありがとうございます！アプリの改善に使わせていただきます。';
   else if (isNone) message = '困りごとなしの日も記録できました。いい一日でしたね。';
   else if (postedBefore) message = '追加ありがとう！何件でも送れます。';
@@ -462,6 +481,7 @@ async function syncPending() {
             text: post.text,
             category: post.category,
             level: post.level,
+            urgent: Boolean(post.urgent),
             inputMethod: post.inputMethod,
           }),
         });
@@ -492,10 +512,6 @@ function renderSyncStatus() {
 function renderPostView(posts) {
   if (postKind === 'request') {
     todayStatus.textContent = '思いついたことを気軽にどうぞ';
-    return;
-  }
-  if (postKind === 'urgent') {
-    todayStatus.textContent = '急ぎのものは、こちらからどうぞ';
     return;
   }
   const today = toDateKey(new Date());
@@ -588,7 +604,7 @@ function makeHistoryItem(post, date) {
   time.textContent = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
   meta.append(time);
   if (post.kind === 'request') meta.append(makeTag('💡 アプリへの要望'));
-  if (post.kind === 'urgent') meta.append(makeTag('🔥 早く解決したい'));
+  if (post.urgent) meta.append(makeTag('🔥 急ぎ'));
   if (post.category) meta.append(makeTag(post.category));
   const level = LEVELS.find((l) => l.value === post.level);
   if (level) meta.append(makeTag(level.label));
@@ -800,6 +816,13 @@ function setupEvents() {
 
   document.querySelectorAll('.kind-tab').forEach((tab) => {
     tab.addEventListener('click', () => setKind(tab.dataset.kind));
+  });
+
+  // 急ぎボタンを自分で押したら、それ以降は自動で切り替えない
+  $('urgent-button').addEventListener('click', () => {
+    isUrgent = !isUrgent;
+    urgentChosenByUser = true;
+    renderUrgent();
   });
 
   submitButton.addEventListener('click', () => addPost(false));

@@ -25,10 +25,9 @@
   <main class="app-main">
     <!-- 投稿画面 -->
     <section class="view" id="view-post" data-view="post">
-      <!-- 送る内容の切り替え：困りごと／早く解決したいこと／アプリへの要望 -->
+      <!-- 送る内容の切り替え：困りごと／アプリへの要望 -->
       <div class="kind-tabs" role="group" aria-label="送る内容">
         <button class="kind-tab" type="button" data-kind="trouble" aria-pressed="true">困りごと</button>
-        <button class="kind-tab" type="button" data-kind="urgent" aria-pressed="false">🔥 早く解決したい</button>
         <button class="kind-tab" type="button" data-kind="request" aria-pressed="false">💡 アプリへの要望</button>
       </div>
       <p class="today-status" id="today-status"></p>
@@ -39,6 +38,12 @@
           <span class="mic-icon" aria-hidden="true">🎤</span>
         </button>
         <p class="mic-hint" id="mic-hint">タップして話す</p>
+      </div>
+
+      <!-- 急ぎの印：入力欄の上に説明と一緒に置く -->
+      <div class="urgent-area" id="urgent-area">
+        <p class="urgent-note">※ <strong>早く解決したいこと・早く作ってほしいもの</strong>は「🔥 急ぎ」を押してから送ってください。「早く」「すぐ」などと話すと自動で付きます。</p>
+        <button class="urgent-button" id="urgent-button" type="button" aria-pressed="false">🔥 急ぎ</button>
       </div>
 
       <label class="visually-hidden" for="text-input" id="text-label">困りごと</label>
@@ -105,7 +110,7 @@
       <li>🎤 を押して困りごとを話す（文字で書いてもOK）</li>
       <li>「送信する」を押す</li>
       <li>困りごとがない日は「今日は困りごとなし」を押す</li>
-      <li>早く作ってほしいもの・早く解決したいことは、上の「🔥 早く解決したい」に切り替えて送る</li>
+      <li>早く解決したいことは「🔥 急ぎ」を押してから送る（「早く」「すぐ」と話すと自動で付きます）</li>
       <li>このアプリへの要望は、上の「💡 アプリへの要望」に切り替えて送る</li>
     </ol>
     <p class="intro-note">※ 送信した内容は、このアプリを送った人に届きます。名前や住所などは話さないでください。</p>
