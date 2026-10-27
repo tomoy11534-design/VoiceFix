@@ -25,11 +25,8 @@
   <main class="app-main">
     <!-- 投稿画面 -->
     <section class="view" id="view-post" data-view="post">
-      <!-- 送る内容の切り替え：困りごと／アプリへの要望 -->
-      <div class="kind-tabs" role="group" aria-label="送る内容">
-        <button class="kind-tab" type="button" data-kind="trouble" aria-pressed="true">困りごと</button>
-        <button class="kind-tab" type="button" data-kind="request" aria-pressed="false">💡 アプリへの要望</button>
-      </div>
+      <!-- アプリへの要望は、やりとりできる要望ボードで受け付ける -->
+      <a class="board-banner board-link" target="_blank" rel="noopener noreferrer">💡 アプリへの要望・相談は「要望ボード」へ ↗</a>
       <p class="today-status" id="today-status"></p>
       <h2 class="question" id="question">今日はどんなことに<br>困りましたか？</h2>
 
@@ -99,7 +96,7 @@
       <p class="celebration-emoji" id="celebration-emoji">👍</p>
       <p class="celebration-title" id="celebration-title"></p>
       <p class="celebration-message" id="celebration-message"></p>
-      <!-- 急ぎ・要望を送ったときだけ、やりとりできる要望ボードへの入口を出す -->
+      <!-- 急ぎを送ったときだけ、やりとりできる要望ボードへの入口を出す -->
       <div class="celebration-link" id="celebration-link" hidden>
         <a class="secondary-button board-link" target="_blank" rel="noopener noreferrer">💬 要望ボードで相談する ↗</a>
         <button class="text-button" id="celebration-close" type="button">閉じる</button>
@@ -116,7 +113,7 @@
       <li>「送信する」を押す</li>
       <li>困りごとがない日は「今日は困りごとなし」を押す</li>
       <li>早く解決したいことは「🔥 急ぎ」を押してから送る（「早く」「すぐ」と話すと自動で付きます）</li>
-      <li>このアプリへの要望は、上の「💡 アプリへの要望」に切り替えて送る</li>
+      <li>このアプリへの要望は、上の「💡 要望ボード」から送る（返事が来て、やりとりできます）</li>
     </ol>
     <p class="intro-note">※ 送信した内容は、このアプリを送った人に届きます。名前や住所などは話さないでください。</p>
 

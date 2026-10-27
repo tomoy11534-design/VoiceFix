@@ -35,19 +35,6 @@ const LEVEL_KEYWORDS = [
 ];
 // 話した・書いた言葉から「急ぎ」を自動で付けるためのキーワード
 const URGENT_KEYWORDS = ['急ぎ', '急いで', '至急', '早く', 'はやく', '早急', 'すぐ', '今すぐ', 'いますぐ', '早めに', 'なんとかして', '何とかして', '待てない', '間に合わない'];
-// 送る内容の種類ごとの表示
-const KINDS = {
-  trouble: {
-    question: '今日はどんなことに<br>困りましたか？',
-    label: '困りごと',
-    placeholder: '話した内容がここに出ます。キーボードで書いたり直したりもできます。',
-  },
-  request: {
-    question: 'このアプリを<br>どう良くしてほしいですか？',
-    label: 'アプリへの要望',
-    placeholder: '「ここが使いにくい」「こんな機能がほしい」など、話したり書いたりしてください。',
-  },
-};
 const PRAISES = [
   '今日も記録できました！',
   '話してくれてありがとう！',
@@ -124,36 +111,13 @@ function toDateKey(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-// 困りごとの投稿かどうか（以前の投稿には kind がないので困りごととして扱う）
-const isTrouble = (post) => !post.kind || post.kind === 'trouble';
-
-// カレンダーのスタンプは困りごとの記録がある日だけ押す
 function postedDays(posts) {
-  return new Set(posts.filter(isTrouble).map((p) => toDateKey(new Date(p.createdAt))));
+  return new Set(posts.map((p) => toDateKey(new Date(p.createdAt))));
 }
 
 function makeId() {
   if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-// ===== 送る内容の切り替え =====
-let postKind = 'trouble';
-
-function setKind(kind) {
-  postKind = kind;
-  const config = KINDS[kind];
-  document.querySelectorAll('.kind-tab').forEach((tab) => {
-    tab.setAttribute('aria-pressed', String(tab.dataset.kind === kind));
-  });
-  $('question').innerHTML = config.question;
-  $('text-label').textContent = config.label;
-  textInput.placeholder = config.placeholder;
-  // 困りごと以外では急ぎ・分野・困り度と「困りごとなし」は使わない
-  $('urgent-area').hidden = kind !== 'trouble';
-  $('category-chips').closest('details').hidden = kind !== 'trouble';
-  noneButton.hidden = kind !== 'trouble';
-  renderPostView(loadPosts());
 }
 
 // ===== 分野・困り度の選択 =====
@@ -392,7 +356,6 @@ function resetForm() {
   usedKeyboard = false;
   $('category-chips').closest('details').open = false;
   micHint.textContent = 'タップして話す';
-  setKind('trouble');
   renderChips();
   updateSubmitState();
 }
@@ -403,15 +366,13 @@ function addPost(isNone) {
   if (!isNone && !text) return;
 
   const posts = loadPosts();
-  const kind = isNone ? 'trouble' : postKind;
   const post = {
     id: makeId(),
     createdAt: new Date().toISOString(),
-    kind,
     text: isNone ? '' : text,
-    category: kind === 'trouble' && !isNone ? selectedCategory : '',
-    level: kind === 'trouble' && !isNone ? selectedLevel : 0,
-    urgent: kind === 'trouble' && !isNone && isUrgent,
+    category: isNone ? '' : selectedCategory,
+    level: isNone ? 0 : selectedLevel,
+    urgent: !isNone && isUrgent,
     inputMethod: isNone ? 'none' : inputMethodOf(),
     synced: false,
   };
@@ -421,26 +382,25 @@ function addPost(isNone) {
 
   resetForm();
   renderAll();
-  showCelebration(postedBefore, isNone, kind, post.urgent);
+  showCelebration(postedBefore, isNone, post.urgent);
   syncPending();
 }
 
 // ===== 送信後のお祝い =====
 let celebrationTimer = null;
 
-function showCelebration(postedBefore, isNone, kind, urgent) {
-  $('celebration-emoji').textContent = kind === 'request' ? '💡' : urgent ? '🔥' : isNone ? '🌤️' : '👍';
-  $('celebration-title').textContent = kind === 'request' ? '要望を送りました' : '記録しました';
+function showCelebration(postedBefore, isNone, urgent) {
+  $('celebration-emoji').textContent = urgent ? '🔥' : isNone ? '🌤️' : '👍';
+  $('celebration-title').textContent = '記録しました';
 
   let message = PRAISES[Math.floor(Math.random() * PRAISES.length)];
   if (urgent) message = '急ぎで届けました。早く解決できるよう優先して確認します！';
-  else if (kind === 'request') message = 'ご意見ありがとうございます！アプリの改善に使わせていただきます。';
   else if (isNone) message = '困りごとなしの日も記録できました。いい一日でしたね。';
   else if (postedBefore) message = '追加ありがとう！何件でも送れます。';
   $('celebration-message').textContent = message;
 
-  // 急ぎ・要望のときは要望ボードへの入口を出し、押せるよう自動では閉じない
-  const showBoard = Boolean(BOARD_URL) && (urgent || kind === 'request');
+  // 急ぎのときは要望ボードへの入口を出し、押せるよう自動では閉じない
+  const showBoard = Boolean(BOARD_URL) && urgent;
   $('celebration-link').hidden = !showBoard;
 
   celebration.hidden = false;
@@ -483,7 +443,6 @@ async function syncPending() {
             token: SHARED_TOKEN,
             id: post.id,
             createdAt: post.createdAt,
-            kind: post.kind || 'trouble',
             text: post.text,
             category: post.category,
             level: post.level,
@@ -516,12 +475,8 @@ function renderSyncStatus() {
 
 // ===== 投稿画面の表示 =====
 function renderPostView(posts) {
-  if (postKind === 'request') {
-    todayStatus.textContent = '思いついたことを気軽にどうぞ';
-    return;
-  }
   const today = toDateKey(new Date());
-  const todayCount = posts.filter((p) => isTrouble(p) && toDateKey(new Date(p.createdAt)) === today).length;
+  const todayCount = posts.filter((p) => toDateKey(new Date(p.createdAt)) === today).length;
   if (todayCount > 0) {
     todayStatus.textContent = `今日は記録済み ✓（${todayCount}件）何件でも送れます`;
   } else {
@@ -609,7 +564,6 @@ function makeHistoryItem(post, date) {
   const time = document.createElement('span');
   time.textContent = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
   meta.append(time);
-  if (post.kind === 'request') meta.append(makeTag('💡 アプリへの要望'));
   if (post.urgent) meta.append(makeTag('🔥 急ぎ'));
   if (post.category) meta.append(makeTag(post.category));
   const level = LEVELS.find((l) => l.value === post.level);
@@ -649,7 +603,7 @@ function filterByPeriod(posts, period) {
     from = new Date(now.getFullYear(), now.getMonth(), 1);
   }
   // ランキングは困りごとだけを数える
-  return posts.filter((p) => p.inputMethod !== 'none' && isTrouble(p) && (!from || new Date(p.createdAt) >= from));
+  return posts.filter((p) => p.inputMethod !== 'none' && (!from || new Date(p.createdAt) >= from));
 }
 
 function extractWords(text) {
@@ -818,10 +772,6 @@ function setupEvents() {
   // 録音中に入力欄を触ったら、手入力を優先して録音を止める
   textInput.addEventListener('focus', () => {
     if (wantListening) stopListening();
-  });
-
-  document.querySelectorAll('.kind-tab').forEach((tab) => {
-    tab.addEventListener('click', () => setKind(tab.dataset.kind));
   });
 
   // 急ぎボタンを自分で押したら、それ以降は自動で切り替えない

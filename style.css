@@ -127,25 +127,17 @@ button {
   padding: 8px 16px calc(var(--tab-height) + 24px + env(safe-area-inset-bottom));
 }
 
-/* ===== 送る内容の切り替え ===== */
-.kind-tabs {
+/* ===== 要望ボードへの入口（投稿画面の上） ===== */
+a.board-banner {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.kind-tab {
-  flex: 1;
   min-height: 44px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
   border: 1px solid var(--color-border);
   border-radius: 12px;
   background: var(--color-surface);
-}
-
-.kind-tab[aria-pressed="true"] {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: #fff;
+  color: var(--color-accent-strong);
+  font-size: 15px;
   font-weight: 700;
 }
 
