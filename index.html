@@ -25,9 +25,10 @@
   <main class="app-main">
     <!-- 投稿画面 -->
     <section class="view" id="view-post" data-view="post">
-      <!-- 送る内容の切り替え：困りごと／アプリへの要望 -->
+      <!-- 送る内容の切り替え：困りごと／早く解決したいこと／アプリへの要望 -->
       <div class="kind-tabs" role="group" aria-label="送る内容">
         <button class="kind-tab" type="button" data-kind="trouble" aria-pressed="true">困りごと</button>
+        <button class="kind-tab" type="button" data-kind="urgent" aria-pressed="false">🔥 早く解決したい</button>
         <button class="kind-tab" type="button" data-kind="request" aria-pressed="false">💡 アプリへの要望</button>
       </div>
       <p class="today-status" id="today-status"></p>
@@ -104,6 +105,7 @@
       <li>🎤 を押して困りごとを話す（文字で書いてもOK）</li>
       <li>「送信する」を押す</li>
       <li>困りごとがない日は「今日は困りごとなし」を押す</li>
+      <li>早く作ってほしいもの・早く解決したいことは、上の「🔥 早く解決したい」に切り替えて送る</li>
       <li>このアプリへの要望は、上の「💡 アプリへの要望」に切り替えて送る</li>
     </ol>
     <p class="intro-note">※ 送信した内容は、このアプリを送った人に届きます。名前や住所などは話さないでください。</p>
