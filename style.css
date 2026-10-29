@@ -10,6 +10,9 @@
   --color-accent-soft: #fde3d7;
   --color-listening: #e0373b;
   --color-stamp: #f26b3a;
+  /* 要望ボードの新着（全体のオレンジと見分けられる青） */
+  --color-news: #1f5fbf;
+  --color-news-text: #ffffff;
   --radius: 16px;
   --tab-height: 64px;
   color-scheme: light;
@@ -28,6 +31,8 @@
     --color-accent-soft: #4a2c1f;
     --color-listening: #ff5a5e;
     --color-stamp: #ff8452;
+    --color-news: #6ea8ff;
+    --color-news-text: #10161f;
     color-scheme: dark;
   }
 }
@@ -43,6 +48,8 @@
   --color-accent-soft: #4a2c1f;
   --color-listening: #ff5a5e;
   --color-stamp: #ff8452;
+  --color-news: #6ea8ff;
+  --color-news-text: #10161f;
   color-scheme: dark;
 }
 
@@ -141,10 +148,12 @@ a.board-banner {
   font-weight: 700;
 }
 
-/* 要望ボードに新しい動きがあるときは、色を付けて目立たせる */
+/* 要望ボードに新しい動きがあるときは、全体のオレンジとちがう青で塗りつぶして目立たせる */
 a.board-banner.has-news {
-  border: 2px solid var(--color-accent);
-  background: var(--color-accent-soft);
+  border-color: var(--color-news);
+  background: var(--color-news);
+  color: var(--color-news-text);
+  box-shadow: 0 2px 8px rgb(31 95 191 / 0.35);
 }
 
 /* ===== 急ぎの印 ===== */
