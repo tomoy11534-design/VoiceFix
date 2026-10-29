@@ -141,6 +141,12 @@ a.board-banner {
   font-weight: 700;
 }
 
+/* 要望ボードに新しい動きがあるときは、色を付けて目立たせる */
+a.board-banner.has-news {
+  border: 2px solid var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
 /* ===== 急ぎの印 ===== */
 .urgent-area {
   display: flex;

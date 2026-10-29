@@ -8,6 +8,9 @@ const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxCM3N4URUm2F7CsDS
 const SHARED_TOKEN = 'vmy-voice-key-99';
 // 時間を合わせずにやりとりできる「アプリ要望ボード」のURL
 const BOARD_URL = 'https://tomoy11534-design.github.io/app-request-board/?app=VoiceFix';
+// 要望ボードの送り先（新しい動きがあるかを確かめるのに使う）
+// 合言葉はここに書かず、同じ端末で要望ボードを開いたときに保存されたものを使う
+const BOARD_API_URL = 'https://script.google.com/macros/s/AKfycbz-5wsPbWHagg_SRyBw1ix7wDmv33HhNCm3jH9el3LPhrdEiQkeMkOa5vkDksgL8_ASRg/exec';
 
 const CATEGORIES = ['住まい', '家電・機器', 'お金・手続き', '健康', '人間関係', '仕事・学校', 'デジタル', '買い物', '移動', 'その他'];
 const LEVELS = [
@@ -845,8 +848,42 @@ function setupEvents() {
     if (document.visibilityState === 'visible') {
       renderAll();
       syncPending();
+      // 要望ボードで読んで戻ってきたときも、一行を最新にする
+      checkBoardNews();
     }
   });
+}
+
+// ===== 要望ボードの新着 =====
+// 要望ボードと同じサイトにあるので、要望ボードが端末に保存した合言葉・名前・既読を読める。
+// 相手が書いた・更新した要望で、まだ開いていないものがあれば、入口の一行を目立たせる
+const BOARD_BANNER_TEXT = '💡 アプリへの要望・相談は「要望ボード」へ ↗';
+
+async function checkBoardNews() {
+  const banner = document.querySelector('.board-banner');
+  const passphrase = getSetting('board-passphrase');
+  const name = getSetting('board-name') || '';
+  let seen = null;
+  try {
+    seen = JSON.parse(getSetting('board-seen'));
+  } catch {
+    seen = null;
+  }
+  // 要望ボードをこの端末で一度も開いていなければ何もしない
+  if (!banner || !BOARD_API_URL || !passphrase || !seen || !navigator.onLine) return;
+  try {
+    const response = await fetch(BOARD_API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'list', passphrase }),
+    });
+    const data = await response.json();
+    if (!data.ok) return;
+    const count = data.items.filter((item) => item.updatedBy !== name && (item.updatedAt || 0) > (seen[item.id] || 0)).length;
+    banner.textContent = count ? `🔔 要望ボードに新しい動きが ${count}件 あります ↗` : BOARD_BANNER_TEXT;
+    banner.classList.toggle('has-news', count > 0);
+  } catch {
+    // 確かめられなくても、いつもの入口のまま使える
+  }
 }
 
 // ===== 起動 =====
@@ -856,6 +893,7 @@ function init() {
   setupEvents();
   renderAll();
   syncPending();
+  checkBoardNews();
 
   if (!getSetting(INTRO_KEY)) intro.showModal();
 
